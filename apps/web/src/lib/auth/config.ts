@@ -47,46 +47,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }) {
-      if (!user.id || !account || account.provider !== "google") {
-        return true;
-      }
-
-      const existingUser = await db.user.findUnique({
-        where: { id: user.id },
-      });
-
-      if (existingUser) {
-        await db.user.update({
-          where: { id: user.id },
-          data: {
-            googleAccessToken: account.access_token,
-            googleRefreshToken: account.refresh_token,
-            googleAccessTokenExpiresAt: account.expires_at
-              ? new Date(account.expires_at * 1000)
-              : null,
-            googleScope: account.scope,
-          },
-        });
-      }
-
       return true;
-    },
-  },
-  events: {
-    async linkAccount({ user, account }) {
-      if (account.provider === "google") {
-        await db.user.update({
-          where: { id: user.id },
-          data: {
-            googleAccessToken: account.access_token,
-            googleRefreshToken: account.refresh_token,
-            googleAccessTokenExpiresAt: account.expires_at
-              ? new Date(account.expires_at * 1000)
-              : null,
-            googleScope: account.scope,
-          },
-        });
-      }
     },
   },
   pages: {

@@ -57,7 +57,7 @@ async function refreshGoogleToken(user: UserTokenState): Promise<string> {
 }
 
 export async function getValidGoogleAccessToken(userId: string): Promise<string> {
-  const user = await db.user.findUnique({
+  let user = await db.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
@@ -66,6 +66,33 @@ export async function getValidGoogleAccessToken(userId: string): Promise<string>
       googleAccessTokenExpiresAt: true,
     },
   });
+
+  // Fallback: If user table does not have OAuth tokens, check the Account table created by NextAuth
+  if (!user?.googleAccessToken || !user.googleRefreshToken) {
+    const account = await db.account.findFirst({
+      where: { userId, provider: "google" },
+    });
+
+    if (account?.access_token && account.refresh_token) {
+      const expiresAt = account.expires_at ? new Date(account.expires_at * 1000) : null;
+      await db.user.update({
+        where: { id: userId },
+        data: {
+          googleAccessToken: account.access_token,
+          googleRefreshToken: account.refresh_token,
+          googleAccessTokenExpiresAt: expiresAt,
+          googleScope: account.scope,
+        },
+      });
+
+      user = {
+        id: userId,
+        googleAccessToken: account.access_token,
+        googleRefreshToken: account.refresh_token,
+        googleAccessTokenExpiresAt: expiresAt,
+      };
+    }
+  }
 
   if (!user?.googleAccessToken || !user.googleRefreshToken) {
     throw new Error("Google account is not connected. Sign in again to continue.");
