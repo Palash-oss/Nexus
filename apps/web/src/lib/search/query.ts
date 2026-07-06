@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { parseQuery, ParsedQuery } from "@/lib/queryParser";
-import { generateEmbedding, isOpenAiConfigured } from "@/lib/embeddings";
+import { generateEmbedding, isGeminiConfigured } from "@/lib/embeddings";
 
 export type SearchResultItem = {
   id: string;
@@ -64,7 +64,7 @@ export async function performHybridSearch(
   const authorPattern = parsed.author ? `%${parsed.author}%` : null;
 
   // Let's decide search type
-  const searchType: "hybrid" | "keyword" = isOpenAiConfigured() ? "hybrid" : "keyword";
+  const searchType: "hybrid" | "keyword" = isGeminiConfigured() ? "hybrid" : "keyword";
 
   // Step 1: Query A - Full text search
   let keywordResults: DbRow[] = [];

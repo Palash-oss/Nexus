@@ -1,45 +1,47 @@
-import { OpenAI } from "openai";
+import { GoogleGenAI } from "@google/genai";
 import { db } from "@/lib/db";
 
-// Helper to check if OpenAI is configured
-export function isOpenAiConfigured(): boolean {
-  return !!process.env.OPENAI_API_KEY;
+// Helper to check if Gemini is configured
+export function isGeminiConfigured(): boolean {
+  return !!process.env.GEMINI_API_KEY;
 }
 
-// Instantiate OpenAI client dynamically to avoid throwing on import if key is missing
-let openaiClient: OpenAI | null = null;
-function getOpenAIClient() {
-  if (!openaiClient) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error("OpenAI API key is not configured.");
+// Instantiate GoogleGenAI client dynamically to avoid throwing on import if key is missing
+let geminiClient: GoogleGenAI | null = null;
+function getGeminiClient() {
+  if (!geminiClient) {
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error("Gemini API key is not configured.");
     }
-    openaiClient = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+    geminiClient = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
     });
   }
-  return openaiClient;
+  return geminiClient;
 }
 
 /**
- * Generates an embedding for a single text string using text-embedding-3-small.
+ * Generates an embedding for a single text string using text-embedding-004.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  if (!isOpenAiConfigured()) {
-    // Return dummy vector of 1536 dimensions if not configured (development fallback)
-    console.warn("OpenAI API key missing. Generating mock embedding vector.");
-    return Array.from({ length: 1536 }, () => 0.0);
+  if (!isGeminiConfigured()) {
+    // Return dummy vector of 768 dimensions if not configured (development fallback)
+    console.warn("Gemini API key missing. Generating mock embedding vector.");
+    return Array.from({ length: 768 }, () => 0.0);
   }
 
-  const client = getOpenAIClient();
-  const normalizedText = text.replace(/\n/g, " ");
-
-  const response = await client.embeddings.create({
-    model: "text-embedding-3-small",
-    input: normalizedText,
-    encoding_format: "float",
+  const client = getGeminiClient();
+  const response = await client.models.embedContent({
+    model: "text-embedding-004",
+    contents: text,
   });
 
-  return response.data[0].embedding;
+  const embedding = response.embeddings?.[0]?.values;
+  if (!embedding) {
+    throw new Error("Failed to extract embedding values from Gemini response.");
+  }
+
+  return embedding;
 }
 
 /**
@@ -47,24 +49,27 @@ export async function generateEmbedding(text: string): Promise<number[]> {
  */
 export async function generateEmbeddingsBatch(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
-  if (!isOpenAiConfigured()) {
-    return texts.map(() => Array.from({ length: 1536 }, () => 0.0));
+  if (!isGeminiConfigured()) {
+    return texts.map(() => Array.from({ length: 768 }, () => 0.0));
   }
 
-  const client = getOpenAIClient();
+  const client = getGeminiClient();
   const results: number[][] = [];
   
   // Process in batches of 100
   const batchSize = 100;
   for (let i = 0; i < texts.length; i += batchSize) {
-    const batch = texts.slice(i, i + batchSize).map(t => t.replace(/\n/g, " "));
-    const response = await client.embeddings.create({
-      model: "text-embedding-3-small",
-      input: batch,
-      encoding_format: "float",
+    const batch = texts.slice(i, i + batchSize);
+    const response = await client.models.embedContent({
+      model: "text-embedding-004",
+      contents: batch,
     });
 
-    results.push(...response.data.map(item => item.embedding));
+    if (response.embeddings) {
+      results.push(...response.embeddings.map(item => item.values || []));
+    } else {
+      throw new Error("Failed to extract batch embedding values from Gemini response.");
+    }
 
     // Rate limit sleep of 1 second between batches
     if (i + batchSize < texts.length) {
@@ -79,8 +84,6 @@ export async function generateEmbeddingsBatch(texts: string[]): Promise<number[]
  * Scans all documents where embeddingVector is empty and generates/stores embeddings in batches.
  */
 export async function backfillEmbeddings(userId: string): Promise<{ updated: number }> {
-  // Find documents for user where embeddingVector is null or empty array
-  // Since embeddingVector is Float[], we check where it is empty or null
   const docs = await db.document.findMany({
     where: {
       userId,
@@ -124,7 +127,6 @@ export async function backfillEmbeddings(userId: string): Promise<{ updated: num
       }
     } catch (error) {
       console.error(`Backfill failed for batch starting at index ${i}:`, error);
-      // Continue next batches if one fails
     }
 
     if (i + batchSize < docs.length) {

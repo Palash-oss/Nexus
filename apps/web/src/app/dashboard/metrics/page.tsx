@@ -1,7 +1,7 @@
 import { getRequiredServerSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { isAnthropicConfigured } from "@/lib/queryParser";
-import { isOpenAiConfigured } from "@/lib/embeddings";
+import { isGroqConfigured } from "@/lib/queryParser";
+import { isGeminiConfigured } from "@/lib/embeddings";
 import { ArrowLeft, Database, Search, Cpu, Globe, Server, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -93,8 +93,8 @@ export default async function MetricsPage() {
     : "Never";
 
   // Check API keys status
-  const openaiStatus = isOpenAiConfigured() ? "Online" : "Offline";
-  const claudeStatus = isAnthropicConfigured() ? "Online" : "Offline";
+  const geminiStatus = isGeminiConfigured() ? "Online" : "Offline";
+  const groqStatus = isGroqConfigured() ? "Online" : "Offline";
 
   return (
     <main className="relative min-h-screen bg-[#f4f7ff] px-6 pb-20 pt-10 sm:px-10">
@@ -204,8 +204,8 @@ export default async function MetricsPage() {
 
             <div className="space-y-4">
               <StatusRow icon={<Server className="h-4 w-4" />} label="PostgreSQL DB" value="Connected" ok={true} />
-              <StatusRow icon={<CheckCircle2 className="h-4 w-4" />} label="OpenAI API (Embeddings)" value={openaiStatus} ok={openaiStatus === "Online"} />
-              <StatusRow icon={<CheckCircle2 className="h-4 w-4" />} label="Anthropic API (Claude)" value={claudeStatus} ok={claudeStatus === "Online"} />
+              <StatusRow icon={<CheckCircle2 className="h-4 w-4" />} label="Gemini API (Embeddings)" value={geminiStatus} ok={geminiStatus === "Online"} />
+              <StatusRow icon={<CheckCircle2 className="h-4 w-4" />} label="Groq API (Llama)" value={groqStatus} ok={groqStatus === "Online"} />
               <StatusRow icon={<Globe className="h-4 w-4" />} label="Chrome Extension Sync" value={`Last sync: ${lastExtSyncStr}`} ok={!!lastExtToken} />
             </div>
           </Card>

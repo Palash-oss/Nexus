@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import Groq from "groq-sdk";
 
 export type ParsedQuery = {
   cleanQuery: string;
@@ -14,21 +14,21 @@ export type ParsedQuery = {
 const queryCache = new Map<string, { result: ParsedQuery; expiry: number }>();
 const CACHE_TTL_MS = 60 * 1000;
 
-export function isAnthropicConfigured(): boolean {
-  return !!process.env.ANTHROPIC_API_KEY;
+export function isGroqConfigured(): boolean {
+  return !!process.env.GROQ_API_KEY;
 }
 
-let anthropicClient: Anthropic | null = null;
-function getAnthropicClient() {
-  if (!anthropicClient) {
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error("Anthropic API key is not configured.");
+let groqClient: Groq | null = null;
+function getGroqClient() {
+  if (!groqClient) {
+    if (!process.env.GROQ_API_KEY) {
+      throw new Error("Groq API key is not configured.");
     }
-    anthropicClient = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
+    groqClient = new Groq({
+      apiKey: process.env.GROQ_API_KEY,
     });
   }
-  return anthropicClient;
+  return groqClient;
 }
 
 export async function parseQuery(rawQuery: string): Promise<ParsedQuery> {
@@ -43,13 +43,13 @@ export async function parseQuery(rawQuery: string): Promise<ParsedQuery> {
     return cached.result;
   }
 
-  if (!isAnthropicConfigured()) {
-    console.warn("Anthropic API key missing. Using fallback parser.");
+  if (!isGroqConfigured()) {
+    console.warn("Groq API key missing. Using fallback parser.");
     return createDefaultFallback(rawQuery);
   }
 
   try {
-    const client = getAnthropicClient();
+    const client = getGroqClient();
     const today = new Date().toISOString();
 
     const systemPrompt = `You are a search query parser. Extract structured information from the user's search query.
@@ -68,33 +68,19 @@ JSON Schema:
 
 Today's date is: ${today}`;
 
-    const response = await client.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 300,
-      temperature: 0,
-      system: systemPrompt,
+    const response = await client.chat.completions.create({
       messages: [
-        {
-          role: "user",
-          content: rawQuery,
-        },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: rawQuery },
       ],
+      model: "llama-3.3-70b-versatile",
+      temperature: 0,
+      max_tokens: 300,
+      response_format: { type: "json_object" },
     });
 
-    const contentText = response.content
-      .filter((block) => block.type === "text")
-      .map((block) => (block as any).text)
-      .join("")
-      .trim();
-
-    // Parse output JSON, stripping any potential markdown formatting
-    const cleanedJson = contentText
-      .replace(/^```json/i, "")
-      .replace(/^```/, "")
-      .replace(/```$/, "")
-      .trim();
-
-    const parsed = JSON.parse(cleanedJson) as ParsedQuery;
+    const contentText = response.choices[0]?.message?.content?.trim() || "";
+    const parsed = JSON.parse(contentText) as ParsedQuery;
 
     // Cache the result
     queryCache.set(normalized, {
@@ -104,7 +90,7 @@ Today's date is: ${today}`;
 
     return parsed;
   } catch (error) {
-    console.error("Claude query parsing failed:", error);
+    console.error("Groq query parsing failed:", error);
     return createDefaultFallback(rawQuery);
   }
 }
