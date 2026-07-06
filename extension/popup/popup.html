@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header>
+      <div class="logo"><strong>Nexus</strong></div>
+      <a href="http://localhost:3000" target="_blank" class="go-link">Go to Nexus</a>
+    </header>
+
+    <div class="status-card">
+      <div class="status-indicator">
+        <span id="status-dot" class="dot dot-red"></span>
+        <span id="status-text">Not connected</span>
+      </div>
+      <div id="user-info" class="user-info hidden"></div>
+      
+      <!-- Connect action -->
+      <button id="connect-btn" class="btn btn-primary">Connect to Nexus</button>
+      
+      <!-- Token input container (for manual fallback) -->
+      <div id="token-container" class="token-input-container hidden">
+        <input type="text" id="token-input" placeholder="Paste extension token here" />
+        <button id="save-token-btn" class="btn btn-secondary">Save Token</button>
+      </div>
+    </div>
+
+    <!-- Stats Panel -->
+    <div class="stats-panel">
+      <div class="stat-row">
+        <span class="stat-label">Pages queued:</span>
+        <span id="stat-queued" class="stat-value">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Indexed today:</span>
+        <span id="stat-indexed" class="stat-value">0</span>
+      </div>
+    </div>
+
+    <!-- Toggle Action -->
+    <div class="control-row">
+      <label class="switch-label">Pause indexing</label>
+      <label class="switch">
+        <input type="checkbox" id="pause-toggle">
+        <span class="slider round"></span>
+      </label>
+    </div>
+
+    <!-- Battery Saver Settings -->
+    <div class="control-row">
+      <label class="switch-label">Pause on battery saver</label>
+      <label class="switch">
+        <input type="checkbox" id="battery-toggle">
+        <span class="slider round"></span>
+      </label>
+    </div>
+
+    <!-- Mini Search Inside Popup -->
+    <div class="search-box">
+      <input type="text" id="popup-search" placeholder="Quick search Nexus..." />
+      <button id="search-btn" class="btn btn-search">Search</button>
+    </div>
+
+    <!-- Last Indexed list -->
+    <div class="recent-list-container">
+      <div class="recent-header">Recently Indexed</div>
+      <ul id="recent-list" class="recent-list">
+        <li class="empty-list">No pages indexed recently.</li>
+      </ul>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

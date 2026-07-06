@@ -1,0 +1,46 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
+    "@auth/prisma-adapter": "^2.11.2",
+    "@prisma/client": "^5.19.1",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "html-to-text": "^10.0.0",
+    "lucide-react": "^1.21.0",
+    "next": "14.2.5",
+    "next-auth": "^4.24.14",
+    "openai": "^6.45.0",
+    "prisma": "^5.19.1",
+    "react": "^18",
+    "react-dom": "^18",
+    "resend": "^6.17.1",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/html-to-text": "^9.0.4",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.5",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.4.5"
+  }
+}

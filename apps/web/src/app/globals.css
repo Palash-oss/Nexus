@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --nexus-bg: #f4f7ff;
+  --nexus-surface: #ffffff;
+  --nexus-subtle: #f2f5fc;
+  --nexus-border: #d5dff2;
+  --nexus-text: #0d1b3e;
+  --nexus-muted: #536383;
+  --nexus-accent: #1f6fff;
+}
+
+body {
+  background: radial-gradient(circle at 0% 0%, #d8e5ff 0%, #f4f7ff 40%) fixed;
+  color: var(--nexus-text);
+  font-family: var(--font-space-grotesk), sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-nexus-text {
+    color: var(--nexus-text);
+  }
+
+  .text-nexus-muted {
+    color: var(--nexus-muted);
+  }
+
+  .bg-nexus-accent {
+    background-color: var(--nexus-accent);
+  }
+
+  .bg-nexus-subtle {
+    background-color: var(--nexus-subtle);
+  }
+
+  .border-nexus-border {
+    border-color: var(--nexus-border);
+  }
+
+  .focus\:ring-nexus-accent:focus {
+    --tw-ring-color: var(--nexus-accent);
+  }
+}
