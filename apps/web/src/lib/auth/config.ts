@@ -51,19 +51,42 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
 
-      await db.user.update({
+      const existingUser = await db.user.findUnique({
         where: { id: user.id },
-        data: {
-          googleAccessToken: account.access_token,
-          googleRefreshToken: account.refresh_token,
-          googleAccessTokenExpiresAt: account.expires_at
-            ? new Date(account.expires_at * 1000)
-            : null,
-          googleScope: account.scope,
-        },
       });
 
+      if (existingUser) {
+        await db.user.update({
+          where: { id: user.id },
+          data: {
+            googleAccessToken: account.access_token,
+            googleRefreshToken: account.refresh_token,
+            googleAccessTokenExpiresAt: account.expires_at
+              ? new Date(account.expires_at * 1000)
+              : null,
+            googleScope: account.scope,
+          },
+        });
+      }
+
       return true;
+    },
+  },
+  events: {
+    async linkAccount({ user, account }) {
+      if (account.provider === "google") {
+        await db.user.update({
+          where: { id: user.id },
+          data: {
+            googleAccessToken: account.access_token,
+            googleRefreshToken: account.refresh_token,
+            googleAccessTokenExpiresAt: account.expires_at
+              ? new Date(account.expires_at * 1000)
+              : null,
+            googleScope: account.scope,
+          },
+        });
+      }
     },
   },
   pages: {
