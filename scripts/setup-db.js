@@ -22,7 +22,7 @@ async function main() {
   console.log("Running Prisma DB Push...");
   try {
     // Run db push from the root context
-    execSync("npx prisma db push --accept-data-loss --schema=apps/web/prisma/schema.prisma", { stdio: "inherit" });
+    execSync("npx prisma db push --accept-data-loss --skip-generate --schema=apps/web/prisma/schema.prisma", { stdio: "inherit" });
   } catch (err) {
     console.error("Prisma db push failed:", err);
     process.exit(1);
