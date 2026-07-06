@@ -80,7 +80,7 @@ export function SearchShell({ userName }: { userName: string | null | undefined 
         window.open(results[highlightedIndex].url, "_blank");
       }
     },
-    isSearchFocused: document.activeElement === inputRef.current || highlightedIndex >= 0,
+    isSearchFocused: (typeof document !== "undefined" && document.activeElement === inputRef.current) || highlightedIndex >= 0,
   });
 
   // Query API

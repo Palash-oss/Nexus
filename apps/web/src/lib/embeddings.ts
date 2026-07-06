@@ -21,7 +21,7 @@ function getGeminiClient() {
 }
 
 /**
- * Generates an embedding for a single text string using text-embedding-004.
+ * Generates an embedding for a single text string using text-embedding-005.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
   if (!isGeminiConfigured()) {
@@ -32,7 +32,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
   const client = getGeminiClient();
   const response = await client.models.embedContent({
-    model: "text-embedding-004",
+    model: "text-embedding-005",
     contents: text,
   });
 
@@ -61,7 +61,7 @@ export async function generateEmbeddingsBatch(texts: string[]): Promise<number[]
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
     const response = await client.models.embedContent({
-      model: "text-embedding-004",
+      model: "text-embedding-005",
       contents: batch,
     });
 
