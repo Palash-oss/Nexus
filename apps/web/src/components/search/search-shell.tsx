@@ -300,7 +300,7 @@ export function SearchShell({ userName }: { userName: string | null | undefined 
       <KeyboardShortcutsModal isOpen={shortcutsModalOpen} onClose={() => setShortcutsModalOpen(false)} />
 
       {/* Global CSS transition for stagger entries */}
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes staggerIn {
           from {
             opacity: 0;
@@ -311,7 +311,7 @@ export function SearchShell({ userName }: { userName: string | null | undefined 
             transform: translateY(0);
           }
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }
