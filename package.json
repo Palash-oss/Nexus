@@ -12,6 +12,7 @@
     "lint": "npm run lint -w web",
     "typecheck": "npm run typecheck -w web",
     "db:migrate": "npm run db:migrate -w web",
-    "db:generate": "npm run db:generate -w web"
+    "db:generate": "npm run db:generate -w web",
+    "db:setup": "node scripts/setup-db.js && npm run db:generate -w web"
   }
 }

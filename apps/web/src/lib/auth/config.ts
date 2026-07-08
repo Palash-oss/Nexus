@@ -30,6 +30,7 @@ export const authOptions: NextAuthOptions = {
           scope: GOOGLE_SCOPES,
         },
       },
+      checks: ["none"],
     }),
   ],
   callbacks: {

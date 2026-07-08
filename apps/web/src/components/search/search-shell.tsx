@@ -1,8 +1,9 @@
 "use client";
 
-import { Search, Keyboard, Info, Globe } from "lucide-react";
+import { Search, Keyboard, Info, Globe, LogOut } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 
 import { ConnectIndexButton } from "@/components/search/connect-index-button";
 import { ResultCard } from "@/components/search/result-card";
@@ -85,15 +86,6 @@ export function SearchShell({ userName }: { userName: string | null | undefined 
 
   // Query API
   useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
-      setMeta({ count: 0, tookMs: 0 });
-      setParsedQuery(null);
-      setError(null);
-      setHighlightedIndex(-1);
-      return;
-    }
-
     const timer = setTimeout(async () => {
       setLoading(true);
       setError(null);
@@ -137,7 +129,7 @@ export function SearchShell({ userName }: { userName: string | null | undefined 
       } finally {
         setLoading(false);
       }
-    }, 300);
+    }, query.trim() ? 300 : 0);
 
     return () => clearTimeout(timer);
   }, [query, activeSource, refreshKey]);
@@ -206,6 +198,15 @@ export function SearchShell({ userName }: { userName: string | null | undefined 
             <Keyboard className="h-4 w-4" />
             Shortcuts
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => signOut({ callbackUrl: "/signin" })}
+            className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 flex items-center gap-1.5"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </Button>
           <ConnectIndexButton onFinished={() => setRefreshKey((value) => value + 1)} />
         </div>
       </header>
@@ -242,8 +243,10 @@ export function SearchShell({ userName }: { userName: string | null | undefined 
 
       <div className="mb-5 flex items-center justify-between text-xs text-nexus-muted">
         <span>
-          {meta.count > 0 ? `${meta.count} result(s)` : "Start by typing a query"}
-          {searchType === "hybrid" && meta.count > 0 && " (Semantic Search Enabled)"}
+          {!query.trim()
+            ? `Recently Indexed Items (${meta.count})`
+            : `${meta.count} result(s)`}
+          {query.trim() && searchType === "hybrid" && meta.count > 0 && " (Semantic Search Enabled)"}
         </span>
         <span>{meta.tookMs > 0 ? `${meta.tookMs} ms` : ""}</span>
       </div>

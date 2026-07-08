@@ -79,7 +79,7 @@ export async function ingestGmailForUser(userId: string) {
     const messageIds: string[] = [];
     let pageToken: string | undefined;
 
-    while (messageIds.length < 200) {
+    while (messageIds.length < 5000) {
       const params = new URLSearchParams({
         maxResults: "100",
         q: "in:inbox",
@@ -103,7 +103,7 @@ export async function ingestGmailForUser(userId: string) {
       }
     }
 
-    const selectedMessageIds = messageIds.slice(0, 200);
+    const selectedMessageIds = messageIds.slice(0, 5000);
     fetched = selectedMessageIds.length;
 
     for (const messageId of selectedMessageIds) {
@@ -149,6 +149,7 @@ export async function ingestGmailForUser(userId: string) {
             url: `https://mail.google.com/mail/u/0/#inbox/${message.id}`,
             externalCreatedAt: parsedDate,
             externalUpdatedAt: internalDate,
+            embeddingVector: [],
             metadata: {
               threadId: message.threadId,
             },
@@ -165,18 +166,6 @@ export async function ingestGmailForUser(userId: string) {
             },
           },
         });
-
-        try {
-          const textToEmbed = subject + " " + normalizedBody.slice(0, 500);
-          const vector = await generateEmbedding(textToEmbed);
-          await db.$executeRaw`
-            UPDATE "Document"
-            SET "embeddingVector" = ${vector}::double precision[]
-            WHERE id = ${doc.id}
-          `;
-        } catch (err) {
-          console.error(`Failed to generate embedding for Gmail message ${message.id}:`, err);
-        }
 
         indexed += 1;
       } catch (error) {

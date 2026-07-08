@@ -39,7 +39,7 @@ export async function ingestDriveForUser(userId: string) {
     const files: DriveFile[] = [];
     let pageToken: string | undefined;
 
-    while (files.length < 200) {
+    while (files.length < 5000) {
       const params = new URLSearchParams({
         pageSize: "100",
         q: "trashed = false",
@@ -65,7 +65,7 @@ export async function ingestDriveForUser(userId: string) {
       }
     }
 
-    const selectedFiles = files.slice(0, 200);
+    const selectedFiles = files.slice(0, 5000);
     fetched = selectedFiles.length;
 
     for (const file of selectedFiles) {
@@ -94,6 +94,7 @@ export async function ingestDriveForUser(userId: string) {
             url: file.webViewLink ?? `https://drive.google.com/file/d/${file.id}/view`,
             externalCreatedAt: file.createdTime ? new Date(file.createdTime) : undefined,
             externalUpdatedAt: file.modifiedTime ? new Date(file.modifiedTime) : undefined,
+            embeddingVector: [],
             metadata: {
               description,
             },
@@ -111,18 +112,6 @@ export async function ingestDriveForUser(userId: string) {
             },
           },
         });
-
-        try {
-          const textToEmbed = doc.title + " " + doc.content.slice(0, 500);
-          const vector = await generateEmbedding(textToEmbed);
-          await db.$executeRaw`
-            UPDATE "Document"
-            SET "embeddingVector" = ${vector}::double precision[]
-            WHERE id = ${doc.id}
-          `;
-        } catch (err) {
-          console.error(`Failed to generate embedding for Drive file ${file.id}:`, err);
-        }
 
         indexed += 1;
       } catch (error) {

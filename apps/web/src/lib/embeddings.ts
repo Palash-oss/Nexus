@@ -21,7 +21,7 @@ function getGeminiClient() {
 }
 
 /**
- * Generates an embedding for a single text string using text-embedding-005.
+ * Generates an embedding for a single text string using gemini-embedding-001.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
   if (!isGeminiConfigured()) {
@@ -32,7 +32,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
   const client = getGeminiClient();
   const response = await client.models.embedContent({
-    model: "text-embedding-005",
+    model: "gemini-embedding-001",
     contents: text,
   });
 
@@ -42,6 +42,22 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
 
   return embedding;
+}
+
+async function callEmbedWithRetry(client: any, batch: string[], retries = 5, delay = 3000): Promise<any> {
+  try {
+    return await client.models.embedContent({
+      model: "gemini-embedding-001",
+      contents: batch,
+    });
+  } catch (error: any) {
+    if (error.status === 429 && retries > 0) {
+      console.warn(`Gemini 429 rate limit hit. Retrying in ${delay}ms... (${retries} retries left)`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return callEmbedWithRetry(client, batch, retries - 1, delay * 2);
+    }
+    throw error;
+  }
 }
 
 /**
@@ -56,14 +72,11 @@ export async function generateEmbeddingsBatch(texts: string[]): Promise<number[]
   const client = getGeminiClient();
   const results: number[][] = [];
   
-  // Process in batches of 100
-  const batchSize = 100;
+  // Process in batches of 10 to respect the 100 RPM quota limit
+  const batchSize = 10;
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
-    const response = await client.models.embedContent({
-      model: "text-embedding-005",
-      contents: batch,
-    });
+    const response = await callEmbedWithRetry(client, batch);
 
     if (response.embeddings) {
       results.push(...response.embeddings.map(item => item.values || []));
@@ -71,9 +84,9 @@ export async function generateEmbeddingsBatch(texts: string[]): Promise<number[]
       throw new Error("Failed to extract batch embedding values from Gemini response.");
     }
 
-    // Rate limit sleep of 1 second between batches
+    // Rate limit sleep of 7 seconds between batches of 10
     if (i + batchSize < texts.length) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 7000));
     }
   }
 

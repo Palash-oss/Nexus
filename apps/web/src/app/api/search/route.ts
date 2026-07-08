@@ -32,14 +32,58 @@ export async function GET(request: NextRequest) {
 
   const query = request.nextUrl.searchParams.get("q")?.trim() ?? "";
   if (!query) {
-    return NextResponse.json({
-      query: "",
-      count: 0,
-      tookMs: 0,
-      results: [],
-      searchType: "keyword",
-      parsedQuery: null,
-    });
+    const startedAt = Date.now();
+    const sourcesParam = request.nextUrl.searchParams.get("sources");
+    const sourceFilters = sourcesParam ? sourcesParam.split(",") : undefined;
+
+    try {
+      const recentDocs = await db.document.findMany({
+        where: {
+          userId: session.user.id,
+          ...(sourceFilters && sourceFilters.length > 0
+            ? { source: { in: sourceFilters as any } }
+            : {}),
+        },
+        orderBy: {
+          externalCreatedAt: "desc",
+        },
+        take: 10,
+      });
+
+      const results = recentDocs.map((doc) => ({
+        id: doc.id,
+        source: doc.source,
+        sourceDocumentId: doc.sourceDocumentId,
+        title: doc.title,
+        content: doc.content,
+        snippet: doc.snippet,
+        author: doc.author,
+        url: doc.url,
+        createdAt: doc.createdAt.toISOString(),
+        score: 1.0,
+      }));
+
+      return NextResponse.json({
+        query: "",
+        count: results.length,
+        tookMs: Date.now() - startedAt,
+        results,
+        searchType: "keyword",
+        parsedQuery: {
+          original: "",
+          clean: "",
+          filters: {
+            sources: sourceFilters || [],
+          },
+          keywords: [],
+          sentiment: "neutral",
+        },
+        isRecent: true,
+      });
+    } catch (error) {
+      console.error("Failed to fetch recent documents:", error);
+      return NextResponse.json({ error: "Failed to load recent documents" }, { status: 500 });
+    }
   }
 
   const startedAt = Date.now();

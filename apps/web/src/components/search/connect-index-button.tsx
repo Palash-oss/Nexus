@@ -30,14 +30,22 @@ export function ConnectIndexButton({ onFinished }: { onFinished: () => void }) {
         throw new Error(payload.error ?? "Ingestion failed.");
       }
 
-      setStatusText("Index complete.");
+      const gmailStatus = payload.gmail?.status === "fulfilled" ? payload.gmail.value.status : "FAILED";
+      const driveStatus = payload.drive?.status === "fulfilled" ? payload.drive.value.status : "FAILED";
+
+      if (gmailStatus === "FAILED" || driveStatus === "FAILED") {
+        setStatusText(`Index partial: Gmail: ${gmailStatus}, Drive: ${driveStatus}`);
+      } else {
+        setStatusText("Index complete.");
+      }
       onFinished();
+      setTimeout(() => setStatusText(null), 5000);
     } catch (error) {
       setStatusText((error as Error).message);
+      setTimeout(() => setStatusText(null), 15000);
     } finally {
       clearTimeout(phaseTimer);
       setLoading(false);
-      setTimeout(() => setStatusText(null), 3000);
     }
   }
 
